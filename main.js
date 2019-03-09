@@ -3,15 +3,16 @@ const readline = require('readline');
 const {log, biglog, errorlog, colorize} = require("./out");
 
 const cmds = require("./cmds");
+const net = require("net");
 
-
+net.createServer(socket => {
+    console.log("Se ha conectado un cliente desde " + socket.remoteAddress);
 // Mensaje inicial
-biglog('CORE Quiz', 'green');
-
+biglog(socket, 'CORE Quiz', 'green');
 
 const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
+    input: socket,
+    output: socket,
     prompt: colorize("quiz > ", 'blue'),
     completer: (line) => {
         const completions = 'h help add delete edit list test p play credits q quit'.split(' ');
@@ -21,6 +22,7 @@ const rl = readline.createInterface({
     }
 });
 
+socket.on("end",()=>{rl.close();}).on("error", ()=>{rl.close();});
 rl.prompt();
 
 rl
@@ -41,7 +43,7 @@ rl
 
         case 'quit':
         case 'q':
-            cmds.quitCmd(rl);
+            cmds.quitCmd(socket, rl);
             break;
 
         case 'add':
@@ -78,15 +80,14 @@ rl
             break;
 
         default:
-            log(`Comando desconocido: '${colorize(cmd, 'red')}'`);
-            log(`Use ${colorize('help', 'green')} para ver todos los comandos disponibles.`);
+            log(socket, `Comando desconocido: '${colorize(cmd, 'red')}'`);
+            log(socket, `Use ${colorize('help', 'green')} para ver todos los comandos disponibles.`);
             rl.prompt();
             break;
     }
 })
 .on('close', () => {
-    log('Adios!');
-    process.exit(0);
+    console.log("Se ha desconectado el cliente desde " + socket.remoteAddress);
+    log(socket, 'Adios!');
 });
-
-
+}).listen(3030);
